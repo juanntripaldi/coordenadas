@@ -108,6 +108,15 @@ button:focus-visible, label.btn:focus-within, input:focus-visible { outline: 3px
 .swatches { display: flex; gap: 10px; }
 .swatches button { width: 40px; height: 40px; border-radius: 50%; border: 3px solid var(--card); box-shadow: 0 0 0 1.5px var(--line); cursor: pointer; }
 .swatches button[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--bigode); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips button {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px;
+  font: 600 15px/1 var(--f-body); color: var(--ink); background: var(--card); border: 1.5px solid var(--line); border-radius: 999px; cursor: pointer;
+}
+.chips button[aria-pressed="true"] { background: var(--bigode-soft); border-color: var(--bigode); color: var(--bigode); }
+.chips:not(.radio) button[aria-pressed="true"]::before { content: "✓"; }
+.editing { margin: 0; font-size: 15px; color: var(--muted); }
+.editing b { color: var(--ink); }
 .msg { margin: 0; font-size: 15px; min-height: 1.5em; }
 .msg.ok { color: var(--frio); }
 .msg.err { color: var(--bigode); }
@@ -163,11 +172,26 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
           </div>
         </div>
         <div class="step">
-          <h2><span>2</span>El bigote</h2>
-          <p class="hint">Arrastralo con el dedo hasta tu boca. Con dos dedos lo agrandás y lo girás.</p>
+          <h2><span>2</span>Los accesorios</h2>
+          <div class="chips" id="layerChips" role="group" aria-label="Qué accesorios mostrar">
+            <button data-layer="stache" aria-pressed="true">Bigote</button>
+            <button data-layer="glasses" aria-pressed="false">Anteojos</button>
+            <button data-layer="lata" aria-pressed="true">Lata Bigodinho</button>
+          </div>
+          <p class="hint">Tocá un accesorio en la foto para elegirlo y arrastralo con el dedo. Con dos dedos lo agrandás y lo girás.</p>
+          <p class="editing" id="editing"></p>
           <div class="slider"><label for="szIn">Tamaño</label><input id="szIn" type="range" min="10" max="90" value="38"></div>
-          <div class="slider"><label for="rtIn">Giro</label><input id="rtIn" type="range" min="-35" max="35" value="0"></div>
-          <div class="swatches" role="group" aria-label="Color del bigote">
+          <div class="slider"><label for="rtIn">Giro</label><input id="rtIn" type="range" min="-45" max="45" value="0"></div>
+          <div class="chips radio" id="opt-glasses" role="group" aria-label="Modelo de anteojos" hidden>
+            <button data-glasses="sol" aria-pressed="true">De sol</button>
+            <button data-glasses="redondos" aria-pressed="false">Redondos</button>
+            <button data-glasses="corazon" aria-pressed="false">Corazón</button>
+          </div>
+          <div class="chips radio" id="opt-lata" role="group" aria-label="Versión de la lata" hidden>
+            <button data-lata="moscatel" aria-pressed="true">Moscatel</button>
+            <button data-lata="rose" aria-pressed="false">Moscatel Rosé</button>
+          </div>
+          <div class="swatches" id="opt-stache" role="group" aria-label="Color del bigote">
             <button data-col="#1B1512" aria-pressed="true" style="background:#1B1512" aria-label="Negro"></button>
             <button data-col="#6B3E1F" aria-pressed="false" style="background:#6B3E1F" aria-label="Castaño"></button>
             <button data-col="#C9A15A" aria-pressed="false" style="background:#C9A15A" aria-label="Rubio"></button>
@@ -176,7 +200,16 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
           </div>
         </div>
         <div class="step">
-          <h2><span>3</span>Guardala</h2>
+          <h2><span>3</span>El fondo</h2>
+          <div class="chips radio" id="bgChips" role="group" aria-label="Fondo de la foto">
+            <button data-bg="foto" aria-pressed="true">Tu foto</button>
+            <button data-bg="prainha" aria-pressed="false">Prainha do Velho Chico</button>
+          </div>
+          <p class="hint">Una playa del río São Francisco, el mismo que riega los viñedos de la bodega. Te recortamos de la foto y te llevamos ahí.</p>
+          <p class="msg" id="bgMsg" role="status"></p>
+        </div>
+        <div class="step">
+          <h2><span>4</span>Guardala</h2>
           <div class="row"><button class="btn primary" id="saveSelfie">Guardar foto</button></div>
           <p class="msg" id="selfieMsg" role="status"></p>
           <div class="fallback" id="selfieFallback" hidden>
@@ -291,29 +324,163 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
   // Bigote de manubrio con puntas enruladas, en una caja de 200 x 56 (centro 100, 26)
   const STACHE = new Path2D('M100 18C112 6 132 4 148 14C160 22 168 30 180 26C188 23 192 14 190 8C198 16 196 34 180 42C164 50 144 46 128 40C116 36 106 34 100 38C94 34 84 36 72 40C56 46 36 50 20 42C4 34 2 16 10 8C8 14 12 23 20 26C32 30 40 22 52 14C68 4 88 6 100 18Z');
   const cv = $('cv'), cx = cv.getContext('2d');
-  let photo = null;                      // ImageBitmap o Image de la foto
-  const m = { x: .5, y: .62, w: .38, r: 0, col: '#1B1512' }; // posiciones relativas al lienzo
+  let photo = null;                      // Image de la foto
 
-  function drawStache(ctx, W, H) {
-    const w = m.w * W, s = w / 200;
+  // Cada accesorio es una capa: posición relativa al lienzo (x, y), ancho relativo (w), giro (r)
+  // y una caja propia de bw x bh centrada en 0,0 donde se dibuja
+  const L = {
+    glasses: { name: 'Anteojos', on: false, x: .5, y: .47, w: .44, r: 0, bw: 200, bh: 70, style: 'sol' },
+    stache:  { name: 'Bigote', on: true, x: .5, y: .62, w: .38, r: 0, bw: 200, bh: 56, col: '#1B1512' },
+    lata:    { name: 'Lata Bigodinho', on: true, x: .84, y: .8, w: .2, r: -10, bw: 100, bh: 190, kind: 'moscatel' }
+  };
+  const ORDER = ['glasses', 'stache', 'lata'];  // de abajo hacia arriba
+  const HOME = {};
+  ORDER.forEach(k => { HOME[k] = { x: L[k].x, y: L[k].y, w: L[k].w, r: L[k].r }; });
+  let sel = 'stache';
+
+  const PAINT = {
+    stache(ctx, o, s) {
+      ctx.translate(-100, -26);
+      ctx.shadowColor = 'rgba(0,0,0,.25)'; ctx.shadowBlur = 6 / s; ctx.shadowOffsetY = 2 / s;
+      ctx.fillStyle = o.col; ctx.fill(STACHE);
+      ctx.shadowColor = 'transparent';
+      ctx.globalAlpha = .18; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(100, 22); ctx.lineTo(100, 34); ctx.stroke();
+    },
+
+    glasses(ctx, o) {
+      ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      ctx.shadowColor = 'rgba(0,0,0,.25)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 2;
+      if (o.style === 'redondos') {
+        for (const sx of [-1, 1]) {
+          ctx.beginPath(); ctx.arc(sx * 52, 0, 36, 0, 7);
+          ctx.fillStyle = 'rgba(214,138,40,.62)'; ctx.fill();
+          ctx.shadowColor = 'transparent';
+          ctx.strokeStyle = '#B8913F'; ctx.lineWidth = 5; ctx.stroke();
+          ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = 4;
+          ctx.beginPath(); ctx.arc(sx * 52, 0, 24, 3.6, 4.4); ctx.stroke();
+        }
+        ctx.strokeStyle = '#B8913F'; ctx.lineWidth = 5;
+        ctx.beginPath(); ctx.moveTo(-17, -6); ctx.quadraticCurveTo(0, -18, 17, -6); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(-88, -10); ctx.lineTo(-99, -14); ctx.moveTo(88, -10); ctx.lineTo(99, -14); ctx.stroke();
+      } else if (o.style === 'corazon') {
+        const heart = (hx, hy, k) => {
+          ctx.beginPath();
+          ctx.moveTo(hx, hy + k * .95);
+          ctx.bezierCurveTo(hx - k * 1.5, hy + k * .05, hx - k * .95, hy - k * 1.05, hx, hy - k * .38);
+          ctx.bezierCurveTo(hx + k * .95, hy - k * 1.05, hx + k * 1.5, hy + k * .05, hx, hy + k * .95);
+          ctx.closePath();
+        };
+        for (const sx of [-1, 1]) {
+          heart(sx * 52, 2, 34);
+          ctx.fillStyle = 'rgba(227,103,143,.82)'; ctx.fill();
+          ctx.shadowColor = 'transparent';
+          ctx.strokeStyle = '#B8325F'; ctx.lineWidth = 5; ctx.stroke();
+          ctx.fillStyle = 'rgba(255,255,255,.5)';
+          ctx.beginPath(); ctx.ellipse(sx * 52 - 14, -12, 7, 4, -.6, 0, 7); ctx.fill();
+        }
+        ctx.strokeStyle = '#B8325F'; ctx.lineWidth = 5;
+        ctx.beginPath(); ctx.moveTo(-16, -8); ctx.quadraticCurveTo(0, -18, 16, -8); ctx.stroke();
+      } else {
+        // De sol, tipo wayfarer: se dibuja la lente derecha y se espeja
+        for (const sx of [-1, 1]) {
+          ctx.save(); ctx.scale(sx, 1);
+          ctx.beginPath();
+          ctx.moveTo(10, -24); ctx.lineTo(97, -30); ctx.lineTo(91, 6);
+          ctx.quadraticCurveTo(85, 31, 52, 31); ctx.quadraticCurveTo(16, 31, 12, 8); ctx.closePath();
+          const lg = ctx.createLinearGradient(0, -30, 0, 31);
+          lg.addColorStop(0, '#323A44'); lg.addColorStop(1, '#0C0F12');
+          ctx.fillStyle = lg; ctx.fill();
+          ctx.shadowColor = 'transparent';
+          ctx.strokeStyle = '#121416'; ctx.lineWidth = 8; ctx.stroke();
+          ctx.fillStyle = 'rgba(255,255,255,.2)';
+          ctx.beginPath(); ctx.moveTo(26, -18); ctx.lineTo(44, -19); ctx.lineTo(28, 16); ctx.lineTo(18, 16); ctx.closePath(); ctx.fill();
+          ctx.restore();
+        }
+        ctx.strokeStyle = '#121416'; ctx.lineWidth = 8;
+        ctx.beginPath(); ctx.moveTo(-12, -16); ctx.quadraticCurveTo(0, -24, 12, -16); ctx.stroke();
+      }
+    },
+
+    // Lata de 269 ml con el bigote impreso a lo largo, de la base a la tapa
+    lata(ctx, o) {
+      const rose = o.kind === 'rose';
+      const c = rose ? ['#B9506E', '#F6B3C6', '#E8899F', '#A9405E'] : ['#5E1530', '#D9568A', '#B8325F', '#55122B'];
+      const body = ctx.createLinearGradient(-44, 0, 44, 0);
+      body.addColorStop(0, c[0]); body.addColorStop(.32, c[1]); body.addColorStop(.62, c[2]); body.addColorStop(1, c[3]);
+      const metal = ctx.createLinearGradient(-44, 0, 44, 0);
+      metal.addColorStop(0, '#7E858C'); metal.addColorStop(.32, '#EEF1F3'); metal.addColorStop(.62, '#B7BEC4'); metal.addColorStop(1, '#6E757C');
+      const silhouette = () => {
+        ctx.beginPath();
+        ctx.moveTo(-37, -86); ctx.lineTo(37, -86); ctx.lineTo(44, -75); ctx.lineTo(44, 80);
+        ctx.ellipse(0, 80, 44, 9, 0, 0, Math.PI); ctx.lineTo(-44, -75); ctx.closePath();
+      };
+      ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 14; ctx.shadowOffsetY = 6;
+      silhouette(); ctx.fillStyle = body; ctx.fill();
+      ctx.shadowColor = 'transparent';
+      // cuello y base de aluminio
+      ctx.beginPath(); ctx.moveTo(-37, -86); ctx.lineTo(37, -86); ctx.lineTo(44, -75); ctx.lineTo(-44, -75); ctx.closePath();
+      ctx.fillStyle = metal; ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-44, 73); ctx.lineTo(44, 73); ctx.lineTo(44, 80); ctx.ellipse(0, 80, 44, 9, 0, 0, Math.PI); ctx.closePath();
+      ctx.fillStyle = metal; ctx.fill();
+      // tapa
+      ctx.beginPath(); ctx.ellipse(0, -86, 37, 7, 0, 0, 7); ctx.fillStyle = '#CDD3D8'; ctx.fill();
+      ctx.strokeStyle = '#8E959C'; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(0, -86, 29, 5, 0, 0, 7); ctx.stroke();
+      ctx.fillStyle = '#A9B0B6'; ctx.beginPath(); ctx.ellipse(4, -87, 9, 3, 0, 0, 7); ctx.fill();
+      // bigote a lo largo
+      ctx.save(); ctx.rotate(-Math.PI / 2); ctx.scale(.68, .68); ctx.translate(-100, -26);
+      ctx.fillStyle = rose ? '#8E1F45' : '#FFF1E2'; ctx.fill(STACHE);
+      ctx.restore();
+      // textos
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.save(); ctx.translate(-31, -2); ctx.rotate(-Math.PI / 2);
+      ctx.fillStyle = rose ? '#8E1F45' : '#FFF1E2'; ctx.font = '19px Shrikhand, Georgia, serif';
+      ctx.fillText('Bigodinho', 0, 0);
+      ctx.restore();
+      ctx.save(); ctx.translate(31, -2); ctx.rotate(-Math.PI / 2);
+      ctx.fillStyle = rose ? '#8E1F45' : '#FFF1E2'; ctx.font = '600 10px "Source Sans 3", sans-serif';
+      ctx.fillText(rose ? 'MOSCATEL ROSÉ · 269 ml' : 'MOSCATEL · 269 ml', 0, 0);
+      ctx.restore();
+      // brillo y gotitas de condensación
+      ctx.fillStyle = 'rgba(255,255,255,.22)'; ctx.fillRect(-27, -73, 7, 144);
+      ctx.fillStyle = 'rgba(255,255,255,.6)';
+      [[-38, -44, 2.2], [33, -58, 1.6], [37, 22, 2], [-14, 54, 1.8], [22, 62, 1.4], [-39, 30, 1.5], [12, -66, 1.3]]
+        .forEach(([dx, dy, r]) => { ctx.beginPath(); ctx.arc(dx, dy, r, 0, 7); ctx.fill(); });
+    }
+  };
+
+  function drawLayer(ctx, k, W, H) {
+    const o = L[k], s = o.w * W / o.bw;
     ctx.save();
-    ctx.translate(m.x * W, m.y * H);
-    ctx.rotate(m.r * Math.PI / 180);
+    ctx.translate(o.x * W, o.y * H);
+    ctx.rotate(o.r * Math.PI / 180);
     ctx.scale(s, s);
-    ctx.translate(-100, -26);
-    ctx.shadowColor = 'rgba(0,0,0,.25)'; ctx.shadowBlur = 6 / s; ctx.shadowOffsetY = 2 / s;
-    ctx.fillStyle = m.col; ctx.fill(STACHE);
-    ctx.shadowColor = 'transparent';
-    ctx.globalAlpha = .18; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2;
-    ctx.beginPath(); ctx.moveTo(100, 22); ctx.lineTo(100, 34); ctx.stroke();
+    PAINT[k](ctx, o, s);
     ctx.restore();
   }
 
-  function drawSample(ctx, W, H) {
-    ctx.fillStyle = '#F6E1E8'; ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = '#B8325F'; ctx.globalAlpha = .12;
-    for (let i = 0; i < 9; i++) { ctx.beginPath(); ctx.arc(W * (i % 3) / 2, H * Math.floor(i / 3) / 2, W * .22, 0, 7); ctx.fill(); }
-    ctx.globalAlpha = 1;
+  // Recuadro punteado del accesorio elegido (solo en pantalla, no sale en la foto)
+  function drawSel(ctx, W, H) {
+    const o = L[sel];
+    if (!o || !o.on) return;
+    const s = o.w * W / o.bw, padd = W * .015;
+    const hw = o.bw * s / 2 + padd, hh = o.bh * s / 2 + padd;
+    ctx.save();
+    ctx.translate(o.x * W, o.y * H); ctx.rotate(o.r * Math.PI / 180);
+    ctx.lineWidth = Math.max(2, W * .004); ctx.setLineDash([W * .014, W * .01]);
+    ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.strokeRect(-hw, -hh, 2 * hw, 2 * hh);
+    ctx.lineDashOffset = W * .012; ctx.strokeStyle = 'rgba(184,50,95,.95)'; ctx.strokeRect(-hw, -hh, 2 * hw, 2 * hh);
+    ctx.restore();
+  }
+
+  function drawSample(ctx, W, H, noBg) {
+    if (!noBg) {
+      ctx.fillStyle = '#F6E1E8'; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = '#B8325F'; ctx.globalAlpha = .12;
+      for (let i = 0; i < 9; i++) { ctx.beginPath(); ctx.arc(W * (i % 3) / 2, H * Math.floor(i / 3) / 2, W * .22, 0, 7); ctx.fill(); }
+      ctx.globalAlpha = 1;
+    }
     // cara de ejemplo
     ctx.fillStyle = '#E8B98F'; ctx.beginPath(); ctx.ellipse(W / 2, H * .52, W * .27, H * .27, 0, 0, 7); ctx.fill();
     ctx.fillStyle = '#3A2414'; ctx.beginPath(); ctx.ellipse(W / 2, H * .31, W * .29, H * .12, 0, Math.PI, 0); ctx.fill();
@@ -324,12 +491,275 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
     ctx.beginPath(); ctx.arc(W / 2, H * .63, W * .07, .2 * Math.PI, .8 * Math.PI); ctx.stroke();
   }
 
+  /* ---------- fondo: prainha del río São Francisco ---------- */
+  // Cielo del sertão, la otra orilla con viñedos y una bodega, el río con una barca de carranca,
+  // arena en primer plano y un mandacaru a la izquierda (la derecha queda libre para la lata)
+  function paintPrainha(ctx, W, H) {
+    const u = Math.min(W, H);
+    const sky = ctx.createLinearGradient(0, 0, 0, H * .47);
+    sky.addColorStop(0, '#3C9FD3'); sky.addColorStop(.65, '#9CD2EA'); sky.addColorStop(1, '#F8E2B2');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H * .5);
+    // sol
+    const sx = W * .8, sy = H * .13, sr = u * .075;
+    const halo = ctx.createRadialGradient(sx, sy, sr * .6, sx, sy, sr * 3.4);
+    halo.addColorStop(0, 'rgba(255,238,170,.75)'); halo.addColorStop(1, 'rgba(255,238,170,0)');
+    ctx.fillStyle = halo; ctx.fillRect(sx - sr * 3.4, sy - sr * 3.4, sr * 6.8, sr * 6.8);
+    ctx.fillStyle = '#FFE08A'; ctx.beginPath(); ctx.arc(sx, sy, sr, 0, 7); ctx.fill();
+    // nubes
+    ctx.fillStyle = '#FFFFFF';
+    const cloud = (x, y, k) => {
+      [[0, 0, 1], [.9, -.35, .8], [1.7, 0, .9], [.8, .25, .9]].forEach(([dx, dy, r]) => {
+        ctx.beginPath(); ctx.arc(x + dx * k, y + dy * k, r * k, 0, 7); ctx.fill();
+      });
+    };
+    cloud(W * .08, H * .09, u * .04); cloud(W * .52, H * .05, u * .03);
+    // otra orilla: chapada baja de caatinga
+    const bank = H * .47;
+    ctx.fillStyle = '#B4B585';
+    ctx.beginPath(); ctx.moveTo(0, bank);
+    for (let i = 0; i <= 40; i++) {
+      const x = W * i / 40;
+      ctx.lineTo(x, H * (.418 + .008 * Math.sin(i * .9) + .006 * Math.sin(i * 2.3 + 1)));
+    }
+    ctx.lineTo(W, bank); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#7F9563';
+    for (let i = 0; i < 26; i++) {
+      const x = W * ((i * 37) % 100) / 100, y = H * (.43 + ((i * 53) % 10) / 400);
+      ctx.beginPath(); ctx.ellipse(x, y, u * .018, u * .009, 0, 0, 7); ctx.fill();
+    }
+    // viñedos en hileras, a los dos lados para que la persona no los tape
+    ctx.strokeStyle = '#4E7F35'; ctx.lineWidth = Math.max(1.5, H * .0045); ctx.setLineDash([u * .012, u * .006]);
+    for (let i = 0; i < 5; i++) {
+      const y = H * (.437 + i * .0075);
+      ctx.beginPath(); ctx.moveTo(W * .02, y); ctx.lineTo(W * .3, y); ctx.moveTo(W * .64, y); ctx.lineTo(W * .98, y); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    // la bodega
+    const bx = W * .8, by = H * .43, bw = u * .07, bh = u * .028;
+    ctx.fillStyle = '#FBF7EE'; ctx.fillRect(bx, by - bh, bw, bh);
+    ctx.fillStyle = '#B0631A';
+    ctx.beginPath(); ctx.moveTo(bx - bw * .08, by - bh); ctx.lineTo(bx + bw / 2, by - bh * 1.7); ctx.lineTo(bx + bw * 1.08, by - bh); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#6E4A2E'; ctx.fillRect(bx + bw * .42, by - bh * .6, bw * .16, bh * .6);
+    // río
+    const riv = ctx.createLinearGradient(0, bank, 0, H * .68);
+    riv.addColorStop(0, '#2A84A3'); riv.addColorStop(1, '#55B5C5');
+    ctx.fillStyle = riv; ctx.fillRect(0, bank, W, H * .23);
+    ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.lineWidth = Math.max(1.5, H * .003);
+    for (let i = 0; i < 34; i++) {
+      const x = W * ((i * 97) % 100) / 100, y = H * (.485 + ((i * 37) % 100) / 100 * .17), len = W * (.02 + (i % 5) * .012);
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + len, y); ctx.stroke();
+    }
+    // barca con carranca
+    const k = u * .13, ox = W * .22, oy = H * .545;
+    ctx.save(); ctx.translate(ox, oy);
+    ctx.fillStyle = 'rgba(20,60,80,.25)'; ctx.beginPath(); ctx.ellipse(0, k * .16, k * .6, k * .06, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = '#2B5A86'; ctx.fillRect(-k * .36, -k * .24, k * .5, k * .2);
+    ctx.fillStyle = '#F1E6CF'; ctx.fillRect(-k * .4, -k * .28, k * .58, k * .05);
+    ctx.fillStyle = '#7A3E1E';
+    ctx.beginPath(); ctx.moveTo(-k * .52, -k * .05); ctx.lineTo(k * .5, -k * .05); ctx.lineTo(k * .62, -k * .16);
+    ctx.lineTo(k * .42, k * .12); ctx.lineTo(-k * .44, k * .12); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#E9C46A'; ctx.lineWidth = k * .025;
+    ctx.beginPath(); ctx.moveTo(-k * .5, -k * .01); ctx.lineTo(k * .5, -k * .01); ctx.stroke();
+    ctx.fillStyle = '#3A2414';
+    ctx.beginPath(); ctx.arc(k * .63, -k * .21, k * .06, 0, 7); ctx.fill();
+    for (let j = 0; j < 5; j++) {
+      const a = Math.PI * (.75 + j * .14);
+      ctx.beginPath(); ctx.moveTo(k * .63, -k * .21);
+      ctx.lineTo(k * .63 + Math.cos(a) * k * .12, -k * .21 + Math.sin(a) * k * .12);
+      ctx.lineTo(k * .63 + Math.cos(a + .12) * k * .07, -k * .21 + Math.sin(a + .12) * k * .07); ctx.fill();
+    }
+    ctx.restore();
+    // arena
+    const top = H * .66;
+    const sand = ctx.createLinearGradient(0, top, 0, H);
+    sand.addColorStop(0, '#F3DAA6'); sand.addColorStop(1, '#E0B676');
+    ctx.fillStyle = sand;
+    ctx.beginPath(); ctx.moveTo(0, top + H * .01);
+    ctx.bezierCurveTo(W * .3, top - H * .02, W * .6, top + H * .025, W, top - H * .01);
+    ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = Math.max(2, H * .005);
+    ctx.beginPath(); ctx.moveTo(0, top + H * .01);
+    ctx.bezierCurveTo(W * .3, top - H * .02, W * .6, top + H * .025, W, top - H * .01); ctx.stroke();
+    ctx.fillStyle = 'rgba(140,96,40,.18)';
+    for (let i = 0; i < 140; i++) {
+      const x = W * ((i * 61) % 100) / 100 + (i % 7) * 3, y = H * (.7 + ((i * 29) % 100) / 100 * .29);
+      ctx.beginPath(); ctx.arc(x, y, u * .0025, 0, 7); ctx.fill();
+    }
+    // mandacaru
+    const mx = W * .08, mb = H * .99, mw = u * .065, mh = H * .5;
+    ctx.fillStyle = '#3E7A4C';
+    const stem = (x, y0, y1, w) => {
+      ctx.beginPath(); ctx.moveTo(x - w / 2, y0); ctx.lineTo(x - w / 2, y1 + w / 2);
+      ctx.arc(x, y1 + w / 2, w / 2, Math.PI, 0); ctx.lineTo(x + w / 2, y0); ctx.closePath(); ctx.fill();
+    };
+    stem(mx, mb, mb - mh, mw);
+    const arm = (dir, yJoin, reach, yTop) => {
+      const w = mw * .72, ex = mx + dir * reach;
+      ctx.lineWidth = w; ctx.strokeStyle = '#3E7A4C'; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(mx, yJoin); ctx.lineTo(ex - dir * w * .5, yJoin);
+      ctx.quadraticCurveTo(ex, yJoin, ex, yJoin - w * .6); ctx.stroke();
+      stem(ex, yJoin - w * .5, yTop, w);
+    };
+    arm(1, mb - mh * .42, mw * 1.25, mb - mh * .8);
+    arm(-1, mb - mh * .3, mw * 1.05, mb - mh * .62);
+    ctx.strokeStyle = 'rgba(160,210,150,.45)'; ctx.lineWidth = Math.max(1.5, mw * .06); ctx.lineCap = 'butt';
+    [-.22, 0, .22].forEach(f => { ctx.beginPath(); ctx.moveTo(mx + f * mw, mb); ctx.lineTo(mx + f * mw, mb - mh + mw * .3); ctx.stroke(); });
+  }
+  const bgCache = { w: 0, h: 0, c: null };
+  function prainha(W, H) {
+    if (bgCache.c && bgCache.w === W && bgCache.h === H) return bgCache.c;
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    paintPrainha(c.getContext('2d'), W, H);
+    Object.assign(bgCache, { w: W, h: H, c });
+    return c;
+  }
+
+  /* ---------- recorte de la persona (MediaPipe, corre en el teléfono) ---------- */
+  const MP = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
+  const MODEL = 'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite';
+  let segP = null, cut = null, cutFor = null, bg = 'foto';
+  function segmenter() {
+    if (!segP) {
+      segP = (async () => {
+        const v = await import(MP + '/vision_bundle.mjs');
+        const files = await v.FilesetResolver.forVisionTasks(MP + '/wasm');
+        return v.ImageSegmenter.createFromOptions(files, {
+          baseOptions: { modelAssetPath: MODEL },
+          runningMode: 'IMAGE', outputConfidenceMasks: true, outputCategoryMask: false
+        });
+      })();
+      segP.catch(() => { segP = null; });
+    }
+    return segP;
+  }
+
+  async function cutout(img) {
+    const W = cv.width, H = cv.height;
+    const src = document.createElement('canvas'); src.width = W; src.height = H;
+    const sx = src.getContext('2d');
+    sx.drawImage(img, 0, 0, W, H);
+    const seg = await segmenter();
+    const { data, w, h } = await new Promise((res, rej) => {
+      try {
+        seg.segment(src, r => {
+          const ms = r.confidenceMasks || [];
+          const mk = ms[ms.length - 1];
+          if (!mk) { rej(new Error('sin máscara')); return; }
+          res({ data: Float32Array.from(mk.getAsFloat32Array()), w: mk.width, h: mk.height });
+        });
+      } catch (e) { rej(e); }
+    });
+    // Si la máscara vino al revés (fondo = 1), se invierte comparando bordes contra el centro
+    let cIn = 0, nIn = 0, cOut = 0, nOut = 0;
+    for (let y = 0; y < h; y += 4) for (let x = 0; x < w; x += 4) {
+      const v = data[y * w + x];
+      if (x < w * .08 || x > w * .92 || y < h * .06) { cOut += v; nOut++; }
+      else if (Math.abs(x - w / 2) < w * .15 && y > h * .3 && y < h * .75) { cIn += v; nIn++; }
+    }
+    const inv = cOut / nOut > cIn / nIn;
+    const md = new ImageData(w, h);
+    let inside = 0;
+    for (let i = 0; i < w * h; i++) {
+      const v = inv ? 1 - data[i] : data[i];
+      const a = Math.min(1, Math.max(0, (v - .35) / .4));
+      if (a > .5) inside++;
+      md.data[i * 4 + 3] = Math.round(a * 255);
+    }
+    if (inside < w * h * .03) throw new Error('sin persona');
+    const mc = document.createElement('canvas'); mc.width = w; mc.height = h;
+    mc.getContext('2d').putImageData(md, 0, 0);
+    sx.globalCompositeOperation = 'destination-in';
+    sx.imageSmoothingQuality = 'high';
+    if ('filter' in sx) sx.filter = `blur(${Math.max(1, Math.round(W / 700))}px)`;
+    sx.drawImage(mc, 0, 0, W, H);
+    sx.filter = 'none'; sx.globalCompositeOperation = 'source-over';
+    return src;
+  }
+
+  function setBgChips() {
+    document.querySelectorAll('#bgChips button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.bg === bg)));
+  }
+  async function setBg(v) {
+    bg = v; setBgChips();
+    const msg = $('bgMsg'); msg.className = 'msg'; msg.textContent = '';
+    if (v === 'prainha' && photo && cutFor !== photo) {
+      const img = photo;
+      msg.textContent = 'Recortándote de la foto… La primera vez tarda unos segundos.';
+      try {
+        const c = await cutout(img);
+        if (img === photo) { cut = c; cutFor = img; }
+        msg.textContent = '';
+      } catch (e) {
+        if (img !== photo) return;
+        bg = 'foto'; setBgChips();
+        msg.className = 'msg err';
+        msg.textContent = e && e.message === 'sin persona'
+          ? 'No te encontramos en la foto. Probá con una donde se te vea más cerca.'
+          : 'No pudimos recortar la foto en este teléfono. Quedó con tu fondo.';
+      }
+    }
+    render();
+  }
+  document.querySelectorAll('#bgChips button').forEach(b => b.addEventListener('click', () => setBg(b.dataset.bg)));
+
+  /* ---------- dibujo ---------- */
+  function paintBase(ctx, W, H) {
+    if (bg === 'prainha') {
+      if (!photo) { ctx.drawImage(prainha(W, H), 0, 0); drawSample(ctx, W, H, true); return; }
+      if (cutFor === photo) { ctx.drawImage(prainha(W, H), 0, 0); ctx.drawImage(cut, 0, 0, W, H); return; }
+    }
+    if (photo) ctx.drawImage(photo, 0, 0, W, H); else drawSample(ctx, W, H);
+  }
+
   function render() {
     const W = cv.width, H = cv.height;
     cx.clearRect(0, 0, W, H);
-    if (photo) cx.drawImage(photo, 0, 0, W, H); else drawSample(cx, W, H);
-    drawStache(cx, W, H);
+    paintBase(cx, W, H);
+    ORDER.forEach(k => { if (L[k].on) drawLayer(cx, k, W, H); });
+    drawSel(cx, W, H);
   }
+
+  // La lata va abajo a la derecha, entera dentro de la foto aunque sea apaisada
+  function placeLata() {
+    const o = L.lata, hRel = o.w * cv.width * o.bh / o.bw / cv.height;
+    o.x = 1 - o.w / 2 - .05;
+    o.y = Math.max(.5, 1 - hRel / 2 - .04);
+  }
+
+  /* ---------- controles ---------- */
+  function syncUI() {
+    const o = L[sel], active = !!(o && o.on);
+    $('editing').innerHTML = active ? `Moviendo: <b>${o.name}</b>` : 'Prendé un accesorio para moverlo.';
+    $('szIn').disabled = $('rtIn').disabled = !active;
+    if (active) { $('szIn').value = Math.round(o.w * 100); $('rtIn').value = Math.round(o.r); }
+    $('opt-stache').hidden = !(active && sel === 'stache');
+    $('opt-glasses').hidden = !(active && sel === 'glasses');
+    $('opt-lata').hidden = !(active && sel === 'lata');
+    document.querySelectorAll('#layerChips button').forEach(b => b.setAttribute('aria-pressed', String(L[b.dataset.layer].on)));
+  }
+  function select(k) { sel = k; syncUI(); render(); }
+
+  document.querySelectorAll('#layerChips button').forEach(b => b.addEventListener('click', () => {
+    const k = b.dataset.layer;
+    L[k].on = !L[k].on;
+    if (L[k].on) sel = k;
+    else if (sel === k) sel = [...ORDER].reverse().find(j => L[j].on) || null;
+    syncUI(); render();
+  }));
+  document.querySelectorAll('#opt-glasses button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#opt-glasses button').forEach(o => o.setAttribute('aria-pressed', String(o === b)));
+    L.glasses.style = b.dataset.glasses; render();
+  }));
+  document.querySelectorAll('#opt-lata button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#opt-lata button').forEach(o => o.setAttribute('aria-pressed', String(o === b)));
+    L.lata.kind = b.dataset.lata; render();
+  }));
+  document.querySelectorAll('#opt-stache button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#opt-stache button').forEach(o => o.setAttribute('aria-pressed', String(o === b)));
+    L.stache.col = b.dataset.col; render();
+  }));
+  $('szIn').addEventListener('input', e => { if (L[sel]) { L[sel].w = e.target.value / 100; render(); } });
+  $('rtIn').addEventListener('input', e => { if (L[sel]) { L[sel].r = +e.target.value; render(); } });
 
   async function loadFile(file) {
     if (!file) return;
@@ -338,11 +768,12 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
     img.onload = () => {
       const MAX = 1600, k = Math.min(1, MAX / Math.max(img.naturalWidth, img.naturalHeight));
       cv.width = Math.round(img.naturalWidth * k); cv.height = Math.round(img.naturalHeight * k);
-      photo = img;
-      Object.assign(m, { x: .5, y: .62, w: .38, r: 0 });
-      $('szIn').value = 38; $('rtIn').value = 0;
+      photo = img; cut = null; cutFor = null;
+      ORDER.forEach(j => Object.assign(L[j], HOME[j]));
+      placeLata();
       $('sampleTag').hidden = true; $('selfieFallback').hidden = true; $('selfieMsg').textContent = '';
-      render();
+      syncUI();
+      if (bg === 'prainha') setBg('prainha'); else render();
     };
     img.onerror = () => { $('selfieMsg').className = 'msg err'; $('selfieMsg').textContent = 'No pudimos abrir esa imagen. Probá con otra foto.'; };
     img.src = url;
@@ -350,41 +781,56 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
   $('camIn').addEventListener('change', e => loadFile(e.target.files[0]));
   $('galIn').addEventListener('change', e => loadFile(e.target.files[0]));
 
-  $('szIn').addEventListener('input', e => { m.w = e.target.value / 100; render(); });
-  $('rtIn').addEventListener('input', e => { m.r = +e.target.value; render(); });
-  document.querySelectorAll('.swatches button').forEach(b => b.addEventListener('click', () => {
-    document.querySelectorAll('.swatches button').forEach(o => o.setAttribute('aria-pressed', String(o === b)));
-    m.col = b.dataset.col; render();
-  }));
-
-  // Arrastre con un dedo; pellizco y giro con dos
+  // Tocar elige el accesorio de más arriba bajo el dedo; arrastre con un dedo; pellizco y giro con dos
+  function hit(px, py) {
+    const W = cv.width, H = cv.height;
+    for (const k of [...ORDER].reverse()) {
+      const o = L[k];
+      if (!o.on) continue;
+      const s = o.w * W / o.bw, a = -o.r * Math.PI / 180;
+      const dx = (px - o.x) * W, dy = (py - o.y) * H;
+      const lx = (dx * Math.cos(a) - dy * Math.sin(a)) / s, ly = (dx * Math.sin(a) + dy * Math.cos(a)) / s;
+      if (Math.abs(lx) <= o.bw * .6 && Math.abs(ly) <= o.bh * .6 + 12) return k;
+    }
+    return null;
+  }
   const pts = new Map();
   let g0 = null;
   const rel = e => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height, px: e.clientX, py: e.clientY }; };
   function snapshot() {
-    const a = [...pts.values()];
-    if (a.length === 1) return { kind: 1, p: a[0], m: { ...m } };
+    const a = [...pts.values()], o = L[sel];
+    if (!o) return null;
+    const m = { x: o.x, y: o.y, w: o.w, r: o.r };
+    if (a.length === 1) return { kind: 1, p: a[0], m };
     if (a.length >= 2) {
       const [p, q] = a, d = Math.hypot(q.px - p.px, q.py - p.py), ang = Math.atan2(q.py - p.py, q.px - p.px);
-      return { kind: 2, d, ang, cxr: (p.x + q.x) / 2, cyr: (p.y + q.y) / 2, m: { ...m } };
+      return { kind: 2, d, ang, cxr: (p.x + q.x) / 2, cyr: (p.y + q.y) / 2, m };
     }
     return null;
   }
-  cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); pts.set(e.pointerId, rel(e)); g0 = snapshot(); });
+  cv.addEventListener('pointerdown', e => {
+    cv.setPointerCapture(e.pointerId);
+    const p = rel(e);
+    pts.set(e.pointerId, p);
+    if (pts.size === 1) { const k = hit(p.x, p.y); if (k && k !== sel) select(k); }
+    g0 = snapshot();
+  });
   cv.addEventListener('pointermove', e => {
     if (!pts.has(e.pointerId)) return;
     pts.set(e.pointerId, rel(e));
-    const now = snapshot();
+    const o = L[sel], now = snapshot();
+    if (!o || !o.on) return;
     if (!g0 || !now || now.kind !== g0.kind) { g0 = now; return; }
+    const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
     if (now.kind === 1) {
-      m.x = Math.min(1, Math.max(0, g0.m.x + now.p.x - g0.p.x));
-      m.y = Math.min(1, Math.max(0, g0.m.y + now.p.y - g0.p.y));
+      o.x = clamp(g0.m.x + now.p.x - g0.p.x, 0, 1);
+      o.y = clamp(g0.m.y + now.p.y - g0.p.y, 0, 1);
     } else {
-      m.w = Math.min(.9, Math.max(.1, g0.m.w * now.d / g0.d));
-      m.r = Math.min(35, Math.max(-35, g0.m.r + (now.ang - g0.ang) * 180 / Math.PI));
-      m.x = Math.min(1, Math.max(0, g0.m.x + now.cxr - g0.cxr));
-      m.y = Math.min(1, Math.max(0, g0.m.y + now.cyr - g0.cyr));
-      $('szIn').value = Math.round(m.w * 100); $('rtIn').value = Math.round(m.r);
+      o.w = clamp(g0.m.w * now.d / g0.d, .1, .9);
+      o.r = clamp(g0.m.r + (now.ang - g0.ang) * 180 / Math.PI, -45, 45);
+      o.x = clamp(g0.m.x + now.cxr - g0.cxr, 0, 1);
+      o.y = clamp(g0.m.y + now.cyr - g0.cyr, 0, 1);
+      $('szIn').value = Math.round(o.w * 100); $('rtIn').value = Math.round(o.r);
     }
     render();
   });
@@ -395,8 +841,8 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
     const W = cv.width, H = cv.height, band = Math.round(Math.max(W * .17, 150));
     const out = document.createElement('canvas'); out.width = W; out.height = H + band;
     const o = out.getContext('2d');
-    if (photo) o.drawImage(photo, 0, 0, W, H); else drawSample(o, W, H);
-    drawStache(o, W, H);
+    paintBase(o, W, H);
+    ORDER.forEach(k => { if (L[k].on) drawLayer(o, k, W, H); });
     o.fillStyle = '#B8325F'; o.fillRect(0, H, W, band);
     const pad = band * .28;
     o.fillStyle = '#FFFFFF'; o.textBaseline = 'middle';
@@ -406,7 +852,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
     o.font = `600 ${Math.round(band * .15)}px "Source Sans 3", sans-serif`;
     o.fillText('Vinícola Paralelo 9', W - pad, H + band * .36);
     o.font = `400 ${Math.round(band * .13)}px "Source Sans 3", sans-serif`;
-    o.fillText('Vale do São Francisco · #Bigodinho', W - pad, H + band * .62);
+    o.fillText(bg === 'prainha' ? 'Prainha do Velho Chico · #Bigodinho' : 'Vale do São Francisco · #Bigodinho', W - pad, H + band * .62);
     return out;
   }
 
@@ -622,6 +1068,8 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
   });
 
   /* ---------- arranque ---------- */
+  placeLata();
+  syncUI();
   render();
   fontsReady.then(render);
   const h = (location.hash || '').replace('#', '');
