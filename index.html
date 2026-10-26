@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bigodinho y Clube 36</title>
+<meta name="description" content="Sacate una selfie con el bigote de Bigodinho y reservá tu 1400 Nature en el Clube 36. Proyecto académico de Coordenadas Vinhos do Brasil.">
+<meta property="og:title" content="Bigodinho y Clube 36 · Coordenadas Vinhos do Brasil">
+<meta property="og:description" content="Selfie con bigote y tu certificado del Clube 36.">
+<meta name="theme-color" content="#B8325F">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 56'%3E%3Cpath fill='%23B8325F' d='M100 18C112 6 132 4 148 14C160 22 168 30 180 26C188 23 192 14 190 8C198 16 196 34 180 42C164 50 144 46 128 40C116 36 106 34 100 38C94 34 84 36 72 40C56 46 36 50 20 42C4 34 2 16 10 8C8 14 12 23 20 26C32 30 40 22 52 14C68 4 88 6 100 18Z'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=JetBrains+Mono:wght@500&family=Shrikhand&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+/* Dos vistas a pantalla completa (selfie / clube) con pestañas arriba; escenario visual + controles debajo, en una columna en el celular */
+:root {
+  --paper: #F1F4F2;
+  --card: #FFFFFF;
+  --ink: #18222B;
+  --muted: #56646D;
+  --line: #D3DCD8;
+  --bigode: #B8325F;
+  --bigode-soft: #F6E1E8;
+  --frio: #2B5A86;
+  --frio-soft: #E1EAF3;
+  --sol: #B0631A;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --f-bigo: "Shrikhand", Georgia, serif;
+  --f-label: "Cormorant Garamond", Georgia, serif;
+  --f-mono: "JetBrains Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #111719; --card: #182023; --ink: #E8EDEF; --muted: #9AA8AF; --line: #2A3538;
+    --bigode: #E3678F; --bigode-soft: #3A1E29; --frio: #84B3DE; --frio-soft: #1B2A38; --sol: #E39A52;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #111719; --card: #182023; --ink: #E8EDEF; --muted: #9AA8AF; --line: #2A3538;
+  --bigode: #E3678F; --bigode-soft: #3A1E29; --frio: #84B3DE; --frio-soft: #1B2A38; --sol: #E39A52;
+  color-scheme: dark;
+}
+body {
+  background: var(--paper); color: var(--ink); font-family: var(--f-body); font-size: 17px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+[hidden] { display: none !important; }
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; }
+img { max-width: 100%; }
+a.btn { text-decoration: none; }
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 20px 40px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+.wrap > *, .view > *, .panel > *, .step > * { min-width: 0; }
+.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.brand { font-family: var(--f-mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.tabs { display: flex; gap: 6px; background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 4px; }
+.tabs button {
+  font: 600 15px/1 var(--f-body); color: var(--muted); background: none; border: 0; border-radius: 999px;
+  padding: 10px 16px; cursor: pointer;
+}
+.tabs button[aria-selected="true"] { color: #fff; background: var(--bigode); }
+.tabs button[data-tab="clube"][aria-selected="true"] { background: var(--frio); }
+:root[data-theme="dark"] .tabs button[aria-selected="true"] { color: #111719; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tabs button[aria-selected="true"] { color: #111719; } }
+button:focus-visible, label.btn:focus-within, input:focus-visible { outline: 3px solid var(--sol); outline-offset: 2px; }
+
+.view { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+.panel, .step { grid-template-columns: minmax(0, 1fr); }
+.hero { display: grid; gap: 6px; }
+.hero h1 { margin: 0; line-height: 1; text-wrap: balance; }
+.bigo-title { font-family: var(--f-bigo); font-weight: 400; font-size: clamp(48px, 11vw, 84px); color: var(--bigode); }
+.clube-title { font-family: var(--f-label); font-weight: 600; font-size: clamp(48px, 11vw, 84px); color: var(--frio); }
+.hero p { margin: 0; max-width: 60ch; color: var(--muted); font-size: 18px; }
+
+.grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 760px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+.stage { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 10px; }
+.stage canvas { display: block; width: 100%; height: auto; border-radius: 10px; touch-action: none; cursor: grab; }
+.stage canvas:active { cursor: grabbing; }
+.tag {
+  position: absolute; top: 20px; left: 20px; font: 500 11px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase;
+  background: var(--card); color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px;
+}
+.panel { display: grid; gap: 18px; }
+.step { display: grid; gap: 10px; }
+.step h2 { margin: 0; font: 700 15px/1.2 var(--f-display); letter-spacing: .02em; }
+.step h2 span { font-family: var(--f-mono); font-weight: 500; color: var(--muted); margin-right: 6px; }
+.hint { margin: 0; color: var(--muted); font-size: 15px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 20px;
+  font: 600 16px/1 var(--f-body); border-radius: 12px; border: 1.5px solid var(--line); background: var(--card); color: var(--ink);
+  cursor: pointer; position: relative;
+}
+.btn.primary { background: var(--bigode); border-color: var(--bigode); color: #fff; }
+.btn.blue { background: var(--frio); border-color: var(--frio); color: #fff; }
+:root[data-theme="dark"] .btn.primary, :root[data-theme="dark"] .btn.blue { color: #111719; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn.primary, :root:not([data-theme="light"]) .btn.blue { color: #111719; } }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+.file { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+.slider { display: grid; grid-template-columns: 70px minmax(0, 1fr); align-items: center; gap: 10px; font-size: 15px; }
+.slider input { width: 100%; accent-color: var(--bigode); }
+.swatches { display: flex; gap: 10px; }
+.swatches button { width: 40px; height: 40px; border-radius: 50%; border: 3px solid var(--card); box-shadow: 0 0 0 1.5px var(--line); cursor: pointer; }
+.swatches button[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--bigode); }
+.msg { margin: 0; font-size: 15px; min-height: 1.5em; }
+.msg.ok { color: var(--frio); }
+.msg.err { color: var(--bigode); }
+.fallback { display: grid; gap: 8px; }
+.fallback img { width: 100%; border-radius: 10px; border: 1px solid var(--line); }
+
+label.field { display: grid; gap: 6px; font-weight: 600; font-size: 15px; }
+label.field input {
+  font: 400 18px/1.2 var(--f-body); color: var(--ink); background: var(--card); border: 1.5px solid var(--line);
+  border-radius: 12px; padding: 12px 14px; min-height: 48px; width: 100%; box-sizing: border-box;
+}
+.count { font: 500 12px/1 var(--f-mono); color: var(--muted); justify-self: end; }
+.timeline { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; background: var(--frio-soft); border-radius: 14px; padding: 14px 16px; }
+.timeline .end { display: grid; gap: 2px; }
+.timeline .k { font: 500 11px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.timeline .v { font: 700 16px/1.2 var(--f-display); font-variant-numeric: tabular-nums; }
+.timeline .bar { height: 2px; background: var(--frio); position: relative; }
+.timeline .bar span { position: absolute; left: 50%; top: -24px; transform: translateX(-50%); white-space: nowrap; font: 500 12px/1 var(--f-mono); color: var(--frio); }
+.label-stage canvas { cursor: default; max-width: 380px; margin: 0 auto; }
+footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 14px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (prefers-reduced-motion: no-preference) { .btn { transition: transform .12s ease; } .btn:active { transform: scale(.97); } }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">Coordenadas Vinhos do Brasil</div>
+    <nav class="tabs" role="tablist" aria-label="Secciones">
+      <button role="tab" id="t-selfie" data-tab="selfie" aria-selected="true" aria-controls="v-selfie">Selfie Bigodinho</button>
+      <button role="tab" id="t-clube" data-tab="clube" aria-selected="false" aria-controls="v-clube">Clube 36</button>
+    </nav>
+  </header>
+
+  <!-- ============ SELFIE BIGODINHO ============ -->
+  <section class="view" id="v-selfie" role="tabpanel" aria-labelledby="t-selfie">
+    <div class="hero">
+      <h1 class="bigo-title">Bigodinho</h1>
+      <p>El espumante de moscatel de Vinícola Paralelo 9. Sacate una foto, ponete el bigote y llevátela.</p>
+    </div>
+    <div class="grid">
+      <div class="stage">
+        <canvas id="cv" width="1080" height="1350" aria-label="Foto con el bigote de Bigodinho"></canvas>
+        <span class="tag" id="sampleTag">Ejemplo</span>
+      </div>
+      <div class="panel">
+        <div class="step">
+          <h2><span>1</span>La foto</h2>
+          <div class="row">
+            <span class="btn primary">Sacar foto<input class="file" id="camIn" type="file" accept="image/*" capture="user" aria-label="Sacar foto con la cámara"></span>
+            <span class="btn">Elegir de la galería<input class="file" id="galIn" type="file" accept="image/*" aria-label="Elegir una foto de la galería"></span>
+          </div>
+        </div>
+        <div class="step">
+          <h2><span>2</span>El bigote</h2>
+          <p class="hint">Arrastralo con el dedo hasta tu boca. Con dos dedos lo agrandás y lo girás.</p>
+          <div class="slider"><label for="szIn">Tamaño</label><input id="szIn" type="range" min="10" max="90" value="38"></div>
+          <div class="slider"><label for="rtIn">Giro</label><input id="rtIn" type="range" min="-35" max="35" value="0"></div>
+          <div class="swatches" role="group" aria-label="Color del bigote">
+            <button data-col="#1B1512" aria-pressed="true" style="background:#1B1512" aria-label="Negro"></button>
+            <button data-col="#6B3E1F" aria-pressed="false" style="background:#6B3E1F" aria-label="Castaño"></button>
+            <button data-col="#C9A15A" aria-pressed="false" style="background:#C9A15A" aria-label="Rubio"></button>
+            <button data-col="#B8325F" aria-pressed="false" style="background:#B8325F" aria-label="Bigodinho"></button>
+            <button data-col="#2B5A86" aria-pressed="false" style="background:#2B5A86" aria-label="Azul de Novembro Azul"></button>
+          </div>
+        </div>
+        <div class="step">
+          <h2><span>3</span>Guardala</h2>
+          <div class="row"><button class="btn primary" id="saveSelfie">Guardar foto</button></div>
+          <p class="msg" id="selfieMsg" role="status"></p>
+          <div class="fallback" id="selfieFallback" hidden>
+            <div class="row"><button class="btn primary" id="shareSelfie" hidden>Compartir</button><a class="btn" id="dlSelfie" href="#" download="bigodinho-selfie.jpg">Descargar</a></div>
+            <p class="hint">También podés mantener apretada la imagen para guardarla.</p>
+            <img id="selfieImg" alt="Tu foto con el bigote de Bigodinho">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CLUBE 36 ============ -->
+  <section class="view" id="v-clube" role="tabpanel" aria-labelledby="t-clube" hidden>
+    <div class="hero">
+      <h1 class="clube-title">Clube 36</h1>
+      <p>Reservá hoy tu 1400 Nature. Pasa 36 meses sobre lías a 1.400 metros, en São Joaquim, y te llega con tu nombre en la etiqueta.</p>
+    </div>
+    <div class="grid">
+      <div class="stage label-stage">
+        <canvas id="lab" width="1000" height="1300" aria-label="Vista previa de tu etiqueta de 1400 Nature"></canvas>
+        <span class="tag">Etiqueta provisoria</span>
+      </div>
+      <div class="panel">
+        <div class="step">
+          <h2><span>1</span>Tu nombre</h2>
+          <label class="field" for="nameIn">Como querés que aparezca en la etiqueta
+            <input id="nameIn" type="text" maxlength="28" autocomplete="name" placeholder="Ej.: Ana Ferreyra">
+          </label>
+          <span class="count" id="nameCount">0 / 28</span>
+        </div>
+        <div class="step">
+          <h2><span>2</span>Tu espera</h2>
+          <div class="timeline">
+            <div class="end"><span class="k">Reserva</span><span class="v" id="dIn">—</span></div>
+            <div class="bar"><span>36 meses sobre lías</span></div>
+            <div class="end" style="text-align:right"><span class="k">Entrega</span><span class="v" id="dOut">—</span></div>
+          </div>
+          <p class="hint" id="bottleLine">Botella nº — de 3.000</p>
+        </div>
+        <div class="step">
+          <h2><span>3</span>Tu certificado</h2>
+          <div class="row"><button class="btn blue" id="savePdf" disabled>Descargar certificado (PDF)</button></div>
+          <p class="msg" id="clubeMsg" role="status"></p>
+          <div class="fallback" id="clubeFallback" hidden>
+            <div class="row"><button class="btn blue" id="shareCert" hidden>Compartir</button><a class="btn" id="dlCert" href="#" download="Clube36.pdf">Descargar PDF</a></div>
+            <p class="hint">Así se ve tu certificado. También podés mantener apretada la imagen para guardarla.</p>
+            <img id="clubeImg" alt="Tu certificado del Clube 36">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>Proyecto académico. Coordenadas Vinhos do Brasil, Vinícola Cota 1400 y Vinícola Paralelo 9 son marcas ficticias del trabajo práctico de Geografía Vitivinícola del Nuevo Mundo, Instituto Gato Dumas, 2026. Las fotos no salen de tu teléfono.</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+(() => {
+  /* ---------- utilidades ---------- */
+  const $ = id => document.getElementById(id);
+  const fontsReady = Promise.all([
+    'Shrikhand', 'Bricolage Grotesque', 'Source Sans 3'
+  ].map(f => document.fonts.load(`700 40px "${f}"`).catch(() => {}))
+   .concat([
+     document.fonts.load('600 40px "Cormorant Garamond"').catch(() => {}),
+     document.fonts.load('italic 600 40px "Cormorant Garamond"').catch(() => {}),
+     document.fonts.load('500 40px "JetBrains Mono"').catch(() => {}),
+     document.fonts.load('400 40px "Source Sans 3"').catch(() => {})
+   ]));
+  const capsP = { downloads: window.claude?.use ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null) };
+
+  // Dentro de Claude usa su descarga; en la web abre el panel con Compartir (WhatsApp, Instagram, galería) y Descargar
+  async function offer(filename, blob, msgEl, fbWrap, fbImg, fbSrc, shareBtn, dlLink) {
+    const dl = await capsP.downloads;
+    if (dl) {
+      try {
+        await dl.save({ filename, data: blob });
+        msgEl.className = 'msg ok'; msgEl.textContent = 'Listo, quedó guardado.';
+        return;
+      } catch (e) {
+        if (e && e.code === 'declined') { msgEl.className = 'msg'; msgEl.textContent = 'No se guardó. Podés intentar de nuevo.'; return; }
+        if (e && e.code === 'rate_limited') { msgEl.className = 'msg'; msgEl.textContent = 'Esperá un momento y volvé a tocar el botón.'; return; }
+      }
+    }
+    if (dlLink.dataset.url) URL.revokeObjectURL(dlLink.dataset.url);
+    const url = URL.createObjectURL(blob);
+    dlLink.href = url; dlLink.dataset.url = url; dlLink.download = filename;
+    let file = null;
+    try { file = new File([blob], filename, { type: blob.type }); } catch (e) {}
+    const canShare = !!(file && navigator.canShare && navigator.canShare({ files: [file] }));
+    shareBtn.hidden = !canShare;
+    shareBtn.onclick = () => { navigator.share({ files: [file] }).catch(() => {}); };
+    fbImg.src = fbSrc; fbWrap.hidden = false;
+    msgEl.className = 'msg ok'; msgEl.textContent = canShare ? 'Listo. Compartila o descargala.' : 'Listo. Descargala con el botón de abajo.';
+    fbWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  /* ---------- pestañas ---------- */
+  const tabs = [...document.querySelectorAll('.tabs button')];
+  function show(tab) {
+    tabs.forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
+    $('v-selfie').hidden = tab !== 'selfie';
+    $('v-clube').hidden = tab !== 'clube';
+    try { history.replaceState(null, '', '#' + tab); } catch (e) {}
+    if (tab === 'clube') drawLabelPreview();
+  }
+  tabs.forEach(b => b.addEventListener('click', () => show(b.dataset.tab)));
+
+  /* ================= SELFIE BIGODINHO ================= */
+  // Bigote de manubrio con puntas enruladas, en una caja de 200 x 56 (centro 100, 26)
+  const STACHE = new Path2D('M100 18C112 6 132 4 148 14C160 22 168 30 180 26C188 23 192 14 190 8C198 16 196 34 180 42C164 50 144 46 128 40C116 36 106 34 100 38C94 34 84 36 72 40C56 46 36 50 20 42C4 34 2 16 10 8C8 14 12 23 20 26C32 30 40 22 52 14C68 4 88 6 100 18Z');
+  const cv = $('cv'), cx = cv.getContext('2d');
+  let photo = null;                      // ImageBitmap o Image de la foto
+  const m = { x: .5, y: .62, w: .38, r: 0, col: '#1B1512' }; // posiciones relativas al lienzo
+
+  function drawStache(ctx, W, H) {
+    const w = m.w * W, s = w / 200;
+    ctx.save();
+    ctx.translate(m.x * W, m.y * H);
+    ctx.rotate(m.r * Math.PI / 180);
+    ctx.scale(s, s);
+    ctx.translate(-100, -26);
+    ctx.shadowColor = 'rgba(0,0,0,.25)'; ctx.shadowBlur = 6 / s; ctx.shadowOffsetY = 2 / s;
+    ctx.fillStyle = m.col; ctx.fill(STACHE);
+    ctx.shadowColor = 'transparent';
+    ctx.globalAlpha = .18; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(100, 22); ctx.lineTo(100, 34); ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawSample(ctx, W, H) {
+    ctx.fillStyle = '#F6E1E8'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#B8325F'; ctx.globalAlpha = .12;
+    for (let i = 0; i < 9; i++) { ctx.beginPath(); ctx.arc(W * (i % 3) / 2, H * Math.floor(i / 3) / 2, W * .22, 0, 7); ctx.fill(); }
+    ctx.globalAlpha = 1;
+    // cara de ejemplo
+    ctx.fillStyle = '#E8B98F'; ctx.beginPath(); ctx.ellipse(W / 2, H * .52, W * .27, H * .27, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = '#3A2414'; ctx.beginPath(); ctx.ellipse(W / 2, H * .31, W * .29, H * .12, 0, Math.PI, 0); ctx.fill();
+    ctx.fillStyle = '#18222B';
+    ctx.beginPath(); ctx.arc(W * .41, H * .48, W * .022, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(W * .59, H * .48, W * .022, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#8A3B2A'; ctx.lineWidth = W * .012; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.arc(W / 2, H * .63, W * .07, .2 * Math.PI, .8 * Math.PI); ctx.stroke();
+  }
+
+  function render() {
+    const W = cv.width, H = cv.height;
+    cx.clearRect(0, 0, W, H);
+    if (photo) cx.drawImage(photo, 0, 0, W, H); else drawSample(cx, W, H);
+    drawStache(cx, W, H);
+  }
+
+  async function loadFile(file) {
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 1600, k = Math.min(1, MAX / Math.max(img.naturalWidth, img.naturalHeight));
+      cv.width = Math.round(img.naturalWidth * k); cv.height = Math.round(img.naturalHeight * k);
+      photo = img;
+      Object.assign(m, { x: .5, y: .62, w: .38, r: 0 });
+      $('szIn').value = 38; $('rtIn').value = 0;
+      $('sampleTag').hidden = true; $('selfieFallback').hidden = true; $('selfieMsg').textContent = '';
+      render();
+    };
+    img.onerror = () => { $('selfieMsg').className = 'msg err'; $('selfieMsg').textContent = 'No pudimos abrir esa imagen. Probá con otra foto.'; };
+    img.src = url;
+  }
+  $('camIn').addEventListener('change', e => loadFile(e.target.files[0]));
+  $('galIn').addEventListener('change', e => loadFile(e.target.files[0]));
+
+  $('szIn').addEventListener('input', e => { m.w = e.target.value / 100; render(); });
+  $('rtIn').addEventListener('input', e => { m.r = +e.target.value; render(); });
+  document.querySelectorAll('.swatches button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.swatches button').forEach(o => o.setAttribute('aria-pressed', String(o === b)));
+    m.col = b.dataset.col; render();
+  }));
+
+  // Arrastre con un dedo; pellizco y giro con dos
+  const pts = new Map();
+  let g0 = null;
+  const rel = e => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height, px: e.clientX, py: e.clientY }; };
+  function snapshot() {
+    const a = [...pts.values()];
+    if (a.length === 1) return { kind: 1, p: a[0], m: { ...m } };
+    if (a.length >= 2) {
+      const [p, q] = a, d = Math.hypot(q.px - p.px, q.py - p.py), ang = Math.atan2(q.py - p.py, q.px - p.px);
+      return { kind: 2, d, ang, cxr: (p.x + q.x) / 2, cyr: (p.y + q.y) / 2, m: { ...m } };
+    }
+    return null;
+  }
+  cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); pts.set(e.pointerId, rel(e)); g0 = snapshot(); });
+  cv.addEventListener('pointermove', e => {
+    if (!pts.has(e.pointerId)) return;
+    pts.set(e.pointerId, rel(e));
+    const now = snapshot();
+    if (!g0 || !now || now.kind !== g0.kind) { g0 = now; return; }
+    if (now.kind === 1) {
+      m.x = Math.min(1, Math.max(0, g0.m.x + now.p.x - g0.p.x));
+      m.y = Math.min(1, Math.max(0, g0.m.y + now.p.y - g0.p.y));
+    } else {
+      m.w = Math.min(.9, Math.max(.1, g0.m.w * now.d / g0.d));
+      m.r = Math.min(35, Math.max(-35, g0.m.r + (now.ang - g0.ang) * 180 / Math.PI));
+      m.x = Math.min(1, Math.max(0, g0.m.x + now.cxr - g0.cxr));
+      m.y = Math.min(1, Math.max(0, g0.m.y + now.cyr - g0.cyr));
+      $('szIn').value = Math.round(m.w * 100); $('rtIn').value = Math.round(m.r);
+    }
+    render();
+  });
+  const up = e => { pts.delete(e.pointerId); g0 = snapshot(); };
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+
+  function composeSelfie() {
+    const W = cv.width, H = cv.height, band = Math.round(Math.max(W * .17, 150));
+    const out = document.createElement('canvas'); out.width = W; out.height = H + band;
+    const o = out.getContext('2d');
+    if (photo) o.drawImage(photo, 0, 0, W, H); else drawSample(o, W, H);
+    drawStache(o, W, H);
+    o.fillStyle = '#B8325F'; o.fillRect(0, H, W, band);
+    const pad = band * .28;
+    o.fillStyle = '#FFFFFF'; o.textBaseline = 'middle';
+    o.font = `${Math.round(band * .46)}px Shrikhand, Georgia, serif`;
+    o.fillText('Bigodinho', pad, H + band * .47);
+    o.textAlign = 'right';
+    o.font = `600 ${Math.round(band * .15)}px "Source Sans 3", sans-serif`;
+    o.fillText('Vinícola Paralelo 9', W - pad, H + band * .36);
+    o.font = `400 ${Math.round(band * .13)}px "Source Sans 3", sans-serif`;
+    o.fillText('Vale do São Francisco · #Bigodinho', W - pad, H + band * .62);
+    return out;
+  }
+
+  $('saveSelfie').addEventListener('click', async () => {
+    await fontsReady;
+    const out = composeSelfie();
+    const msg = $('selfieMsg'); msg.className = 'msg'; msg.textContent = 'Preparando la foto…';
+    out.toBlob(blob => {
+      if (!blob) { msg.className = 'msg err'; msg.textContent = 'No se pudo armar la foto. Probá de nuevo.'; return; }
+      offer('bigodinho-selfie.jpg', blob, msg, $('selfieFallback'), $('selfieImg'), out.toDataURL('image/jpeg', .9), $('shareSelfie'), $('dlSelfie'));
+    }, 'image/jpeg', .9);
+  });
+
+  /* ================= CLUBE 36 ================= */
+  /*
+   * ETIQUETA. Cuando esté el diseño final de Canva:
+   * 1. Exportarlo como PNG de 1000 x 1300 px, sin los datos personales.
+   * 2. Pegar su data URI en LABEL.art (o publicarlo junto a la página y poner su ruta).
+   * 3. Ajustar x / y / tamaño de cada campo en LABEL.fields para que caigan donde va el texto.
+   * Mientras LABEL.art sea null, se dibuja la etiqueta provisoria.
+   */
+  const LABEL = {
+    art: null,
+    w: 1000, h: 1300,
+    fields: {
+      intro:  { x: 500, y: 905,  size: 34, font: '"Source Sans 3", sans-serif', weight: '400', style: 'normal', color: '#4A5862' },
+      nombre: { x: 500, y: 975,  size: 78, font: '"Cormorant Garamond", Georgia, serif', weight: '600', style: 'italic', color: '#16232C', maxW: 820 },
+      garrafa:{ x: 500, y: 1080, size: 28, font: '"JetBrains Mono", monospace', weight: '500', style: 'normal', color: '#2B5A86' },
+      degorge:{ x: 500, y: 1128, size: 28, font: '"JetBrains Mono", monospace', weight: '500', style: 'normal', color: '#2B5A86' }
+    }
+  };
+  const labelArt = (() => { if (!LABEL.art) return null; const i = new Image(); i.src = LABEL.art; return i; })();
+
+  const MES_PT = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  const MES_ES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const today = new Date();
+  const later = new Date(today.getFullYear() + 3, today.getMonth(), today.getDate());
+  const fmtES = d => `${d.getDate()} de ${MES_ES[d.getMonth()]} de ${d.getFullYear()}`;
+  const fmtShort = d => `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+  $('dIn').textContent = fmtShort(today); $('dOut').textContent = fmtShort(later);
+
+  function bottleNo(name) {
+    let h = 2166136261;
+    const s = name.trim().toLowerCase() + '|' + today.toISOString().slice(0, 10);
+    for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return ((h >>> 0) % 3000) + 1;
+  }
+  const pad4 = n => String(n).padStart(4, '0');
+
+  function spaced(ctx, text, x, y, sp) {
+    if ('letterSpacing' in ctx) { ctx.letterSpacing = sp + 'px'; ctx.fillText(text, x, y); ctx.letterSpacing = '0px'; return; }
+    ctx.fillText(text.split('').join(' '), x, y);
+  }
+
+  // Etiqueta provisoria: curvas de nivel de la sierra, el 1400 grande y los datos del vino
+  function drawProvisional(ctx, W, H) {
+    ctx.fillStyle = '#F7F6F1'; ctx.fillRect(0, 0, W, H);
+    ctx.save();
+    ctx.beginPath(); ctx.rect(40, 40, W - 80, H - 80); ctx.clip();
+    ctx.strokeStyle = '#2B5A86'; ctx.lineWidth = 1.6;
+    const ox = W * .62, oy = H * .3;
+    for (let k = 1; k <= 22; k++) {
+      ctx.globalAlpha = k % 5 === 0 ? .42 : .2;
+      ctx.beginPath();
+      for (let a = 0; a <= 360; a += 3) {
+        const t = a * Math.PI / 180;
+        const r = k * 34 * (1 + .16 * Math.sin(3 * t + k * .35) + .09 * Math.sin(5 * t - k * .2) + .05 * Math.cos(7 * t + k));
+        const px = ox + r * Math.cos(t) * 1.12, py = oy + r * Math.sin(t) * .86;
+        a === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      }
+      ctx.closePath(); ctx.stroke();
+    }
+    ctx.restore();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = '#16232C'; ctx.lineWidth = 2; ctx.strokeRect(40, 40, W - 80, H - 80);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = '#16232C';
+    ctx.font = '500 26px "JetBrains Mono", monospace';
+    spaced(ctx, 'VINÍCOLA COTA 1400', W / 2, 120, 6);
+    ctx.font = '600 300px "Cormorant Garamond", Georgia, serif';
+    ctx.fillText('1400', W / 2, 500);
+    ctx.font = '600 52px "Cormorant Garamond", Georgia, serif';
+    spaced(ctx, 'NATURE', W / 2, 580, 18);
+    ctx.fillStyle = '#4A5862';
+    ctx.font = '400 30px "Source Sans 3", sans-serif';
+    ctx.fillText('Espumante · Método tradicional · 36 meses sobre lías', W / 2, 660);
+    ctx.fillText('São Joaquim · Santa Catarina · Brasil · 1.400 m', W / 2, 704);
+    ctx.strokeStyle = '#B9C4C9'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(W / 2 - 160, 800); ctx.lineTo(W / 2 + 160, 800); ctx.stroke();
+    ctx.fillStyle = '#4A5862'; ctx.font = '500 22px "JetBrains Mono", monospace';
+    spaced(ctx, 'CLUBE 36', W / 2, 1220, 8);
+  }
+
+  function fitFont(ctx, f, text) {
+    let size = f.size;
+    do { ctx.font = `${f.style} ${f.weight} ${size}px ${f.font}`; size -= 2; }
+    while (f.maxW && ctx.measureText(text).width > f.maxW && size > 24);
+  }
+
+  function drawLabel(ctx, name) {
+    const W = LABEL.w, H = LABEL.h;
+    ctx.clearRect(0, 0, W, H);
+    if (labelArt && labelArt.complete && labelArt.naturalWidth) ctx.drawImage(labelArt, 0, 0, W, H);
+    else drawProvisional(ctx, W, H);
+    const n = name.trim();
+    const vals = {
+      intro: 'Reservada para',
+      nombre: n || 'Tu nombre',
+      garrafa: `Garrafa nº ${n ? pad4(bottleNo(n)) : '····'} de 3.000`,
+      degorge: `Dégorgement: ${MES_PT[later.getMonth()]} de ${later.getFullYear()}`
+    };
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    for (const [k, f] of Object.entries(LABEL.fields)) {
+      fitFont(ctx, f, vals[k]);
+      ctx.fillStyle = f.color;
+      ctx.globalAlpha = (k === 'nombre' && !n) ? .35 : 1;
+      ctx.fillText(vals[k], f.x, f.y);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  const lab = $('lab'), lx = lab.getContext('2d');
+  function drawLabelPreview() { drawLabel(lx, $('nameIn').value); }
+  fontsReady.then(drawLabelPreview);
+  if (labelArt) labelArt.onload = drawLabelPreview;
+
+  $('nameIn').addEventListener('input', e => {
+    const v = e.target.value;
+    $('nameCount').textContent = `${v.length} / 28`;
+    $('savePdf').disabled = !v.trim();
+    $('bottleLine').textContent = v.trim() ? `Botella nº ${pad4(bottleNo(v))} de 3.000` : 'Botella nº — de 3.000';
+    $('clubeFallback').hidden = true; $('clubeMsg').textContent = '';
+    drawLabelPreview();
+  });
+
+  // Certificado A5 (148 x 210 mm) dibujado a 1240 x 1748 px
+  function composeCert(name) {
+    const W = 1240, H = 1748, c = document.createElement('canvas'); c.width = W; c.height = H;
+    const o = c.getContext('2d');
+    o.fillStyle = '#FFFFFF'; o.fillRect(0, 0, W, H);
+    o.fillStyle = '#2B5A86'; o.fillRect(0, 0, W, 14);
+    o.textAlign = 'left'; o.fillStyle = '#4A5862'; o.font = '500 22px "JetBrains Mono", monospace';
+    spaced(o, 'VINÍCOLA COTA 1400 · SÃO JOAQUIM · SANTA CATARINA', 90, 92, 4);
+    o.fillStyle = '#2B5A86'; o.font = '600 120px "Cormorant Garamond", Georgia, serif';
+    o.fillText('Clube 36', 86, 222);
+    o.fillStyle = '#16232C'; o.font = '600 34px "Bricolage Grotesque", sans-serif';
+    o.fillText('Certificado de reserva', 90, 276);
+    // etiqueta
+    const lc = document.createElement('canvas'); lc.width = LABEL.w; lc.height = LABEL.h;
+    drawLabel(lc.getContext('2d'), name);
+    const lw = 470, lh = lw * LABEL.h / LABEL.w, lx0 = 90, ly0 = 340;
+    o.save(); o.shadowColor = 'rgba(22,35,44,.18)'; o.shadowBlur = 24; o.shadowOffsetY = 8;
+    o.drawImage(lc, lx0, ly0, lw, lh); o.restore();
+    // texto
+    const tx = 610, n = name.trim(), no = pad4(bottleNo(n));
+    o.fillStyle = '#4A5862'; o.font = '500 20px "JetBrains Mono", monospace';
+    spaced(o, 'SOCIO', tx, 380, 3);
+    o.fillStyle = '#16232C'; o.font = 'italic 600 60px "Cormorant Garamond", Georgia, serif';
+    let sz = 60; while (o.measureText(n).width > 540 && sz > 30) { sz -= 2; o.font = `italic 600 ${sz}px "Cormorant Garamond", Georgia, serif`; }
+    o.fillText(n, tx, 440);
+    const rows = [['Vino', '1400 Nature, Brut Nature'], ['Botella', `nº ${no} de 3.000`], ['Reserva', fmtES(today)], ['Entrega', fmtES(later)]];
+    rows.forEach(([k, v], i) => {
+      const y = 530 + i * 86;
+      o.strokeStyle = '#D3DCD8'; o.lineWidth = 1.5; o.beginPath(); o.moveTo(tx, y - 44); o.lineTo(W - 90, y - 44); o.stroke();
+      o.fillStyle = '#4A5862'; o.font = '500 18px "JetBrains Mono", monospace'; spaced(o, k.toUpperCase(), tx, y - 14, 3);
+      o.fillStyle = '#16232C'; o.font = '600 30px "Source Sans 3", sans-serif'; o.fillText(v, tx, y + 22);
+    });
+    // línea de tiempo
+    const ty = 1100;
+    o.fillStyle = '#E1EAF3'; o.fillRect(90, ty - 70, W - 180, 170);
+    o.strokeStyle = '#2B5A86'; o.lineWidth = 4; o.beginPath(); o.moveTo(170, ty + 10); o.lineTo(W - 170, ty + 10); o.stroke();
+    o.fillStyle = '#2B5A86';
+    [170, W - 170].forEach(x => { o.beginPath(); o.arc(x, ty + 10, 12, 0, 7); o.fill(); });
+    for (let i = 1; i < 36; i++) { const x = 170 + (W - 340) * i / 36; o.fillRect(x - 1, ty + (i % 12 === 0 ? -6 : 2), 2, i % 12 === 0 ? 32 : 16); }
+    o.textAlign = 'center'; o.font = '500 20px "JetBrains Mono", monospace';
+    o.fillText('36 MESES SOBRE LÍAS', W / 2, ty - 26);
+    o.fillStyle = '#16232C'; o.font = '600 24px "Source Sans 3", sans-serif';
+    o.fillText(fmtShort(today), 170, ty + 64); o.fillText(fmtShort(later), W - 170, ty + 64);
+    // texto de cierre
+    o.textAlign = 'left'; o.fillStyle = '#16232C'; o.font = '400 28px "Source Sans 3", sans-serif';
+    const para = `Tu botella ya está en la cava de Cota 1400, a 1.400 metros de altura. Durante tres años va a descansar sobre sus lías, en el frío de la sierra catarinense. El día que la degollemos va a llevar tu nombre en la etiqueta y te la enviamos.`;
+    wrap(o, para, 90, 1290, W - 180, 42);
+    o.fillStyle = '#2B5A86'; o.font = 'italic 600 40px "Cormorant Garamond", Georgia, serif';
+    o.fillText('Dois extremos. Um só brinde.', 90, 1520);
+    o.fillStyle = '#7A8790'; o.font = '400 19px "Source Sans 3", sans-serif';
+    wrap(o, 'Proyecto académico. Coordenadas Vinhos do Brasil y Vinícola Cota 1400 son marcas ficticias del trabajo práctico de Geografía Vitivinícola del Nuevo Mundo, Instituto Gato Dumas, 2026. Este certificado no tiene valor comercial.', 90, 1640, W - 180, 28);
+    return c;
+  }
+  function wrap(ctx, text, x, y, maxW, lh) {
+    let line = '';
+    for (const w of text.split(' ')) {
+      const t = line ? line + ' ' + w : w;
+      if (ctx.measureText(t).width > maxW && line) { ctx.fillText(line, x, y); y += lh; line = w; } else line = t;
+    }
+    if (line) ctx.fillText(line, x, y);
+  }
+
+  $('savePdf').addEventListener('click', async () => {
+    const name = $('nameIn').value.trim(); if (!name) return;
+    const msg = $('clubeMsg'); msg.className = 'msg'; msg.textContent = 'Armando tu certificado…';
+    await fontsReady;
+    const cert = composeCert(name);
+    const jpg = cert.toDataURL('image/jpeg', .92);
+    const slug = name.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase() || 'socio';
+    let blob = null;
+    try {
+      const doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a5', orientation: 'portrait' });
+      doc.setProperties({ title: `Clube 36 · ${name}`, subject: 'Certificado de reserva 1400 Nature', author: 'Vinícola Cota 1400 (proyecto académico)' });
+      doc.addImage(jpg, 'JPEG', 0, 0, 148, 210);
+      blob = doc.output('blob');
+    } catch (e) { blob = null; }
+    if (!blob) { $('clubeImg').src = jpg; $('clubeFallback').hidden = false; msg.textContent = ''; return; }
+    offer(`Clube36-${slug}.pdf`, blob, msg, $('clubeFallback'), $('clubeImg'), jpg, $('shareCert'), $('dlCert'));
+  });
+
+  /* ---------- arranque ---------- */
+  render();
+  fontsReady.then(render);
+  const h = (location.hash || '').replace('#', '');
+  show(h === 'clube' ? 'clube' : 'selfie');
+})();
+</script>
+</body>
+</html>
